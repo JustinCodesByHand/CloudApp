@@ -1,0 +1,27 @@
+{
+  "name": "finance",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test-db": "node -e \"const { Pool } = require('pg'); const pool = new Pool({user:'postgres',host:'localhost',database:'postgres',password:'Kripa316316$',port:5432}); pool.query('SELECT NOW()', (err, res) => { console.log(err ? err.message : res.rows[0]); pool.end(); });\"",
+    "test-lambda": "node test-lambda.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.970.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "http-errors": "~1.6.3",
+    "jade": "^0.29.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "node-fetch": "^2.7.0",
+    "pg": "^8.16.3",
+    "tesseract.js": "^7.0.0"
+  }
+}
