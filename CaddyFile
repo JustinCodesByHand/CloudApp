@@ -1,0 +1,33 @@
+finance-tracker.jmcodes.online {
+    # Proxy all API endpoints to Node.js
+    handle /dashboard* {
+        reverse_proxy localhost:5000
+    }
+    handle /analytics* {
+        reverse_proxy localhost:5000
+    }
+    handle /ai-advice* {
+        reverse_proxy localhost:5000
+    }
+    handle /user/spending* {
+        reverse_proxy localhost:5000
+    }
+    handle /transactions* {
+        reverse_proxy localhost:5000
+    }
+    handle /register* {
+        reverse_proxy localhost:5000
+    }
+    handle /login* {
+        reverse_proxy localhost:5000
+    }
+
+    # Serve React frontend for everything else
+    handle {
+        root * /home/ubuntu/CloudApp/finance-app/dist
+        file_server
+        try_files {path} /index.html
+    }
+
+    header -Content-Security-Policy
+}
