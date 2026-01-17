@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
 function EnhancedDashboard({ aiInsight, onGetAdvice }) {
@@ -11,7 +11,7 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
   const [awsLoading, setAwsLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  
+
   // Initialize with safe defaults
   const [dashboardData, setDashboardData] = useState({
     balance: 0,
@@ -33,30 +33,30 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
       setError(null);
       const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
-      
+
       if (savedUser) {
         setUser(JSON.parse(savedUser));
       }
 
       // Fetch dashboard summary
-      const dashboardRes = await fetch('http://localhost:5000/dashboard', {
+      const dashboardRes = await fetch('/dashboard', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (!dashboardRes.ok) {
         throw new Error(`Failed to fetch dashboard: ${dashboardRes.status}`);
       }
-      
+
       const data = await dashboardRes.json();
       console.log('Dashboard data:', data);
-      
+
       // Calculate savings rate safely
       const totalIncome = parseFloat(data.totalIncome) || 0;
       const totalExpenses = parseFloat(data.totalExpenses) || 0;
-      const savingsRate = totalIncome > 0 
+      const savingsRate = totalIncome > 0
         ? parseFloat(((totalIncome - totalExpenses) / totalIncome * 100).toFixed(1))
         : 0;
-      
+
       // Set dashboard data with safe defaults
       setDashboardData(prev => ({
         ...prev,
@@ -66,10 +66,10 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
         savingsRate: savingsRate, // Now a number
         recentTransactions: data.transactions || []
       }));
-      
+
       // Fetch analytics data
       await fetchAnalyticsData();
-      
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       setError(error.message);
@@ -81,20 +81,20 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
   const fetchAnalyticsData = async () => {
     try {
       const token = localStorage.getItem('token');
-      
+
       // Try to fetch from /analytics endpoint if it exists
       // If not, use existing endpoints
-      const analyticsRes = await fetch('http://localhost:5000/analytics', {
+      const analyticsRes = await fetch('/analytics', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (analyticsRes.ok) {
         const analyticsData = await analyticsRes.json();
         console.log('Analytics data:', analyticsData);
-        
+
         if (analyticsData.success && analyticsData.data) {
           const { data } = analyticsData;
-          
+
           // Update with analytics data
           setDashboardData(prev => ({
             ...prev,
@@ -114,7 +114,7 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
         // If /analytics doesn't exist yet, fetch from other endpoints
         await fetchFallbackAnalytics();
       }
-      
+
     } catch (error) {
       console.error('Error fetching analytics:', error);
       // Continue with default data
@@ -124,37 +124,37 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
   const fetchFallbackAnalytics = async () => {
     try {
       const token = localStorage.getItem('token');
-      
+
       // Fetch spending by category
-      const spendingRes = await fetch('http://localhost:5000/user/spending', {
+      const spendingRes = await fetch('/user/spending', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (spendingRes.ok) {
         const spendingData = await spendingRes.json();
-        
+
         // Transform categories for chart
         const spendingByCategory = Object.entries(spendingData.categories || {}).map(([name, amount], index) => ({
           name,
           value: parseFloat(amount) || 0,
           color: getCategoryColor(name)
         }));
-        
+
         // Fetch transactions for trend data
-        const transactionsRes = await fetch('http://localhost:5000/transactions?limit=100', {
+        const transactionsRes = await fetch('/transactions?limit=100', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
         if (transactionsRes.ok) {
           const transactionsData = await transactionsRes.json();
           const transactions = transactionsData.transactions || [];
-          
+
           // Generate monthly trend
           const monthlyTrend = generateMonthlyTrend(transactions);
-          
+
           // Generate weekly spending
           const weeklySpending = generateWeeklySpending(transactions);
-          
+
           setDashboardData(prev => ({
             ...prev,
             spendingByCategory,
@@ -163,7 +163,7 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
           }));
         }
       }
-      
+
     } catch (error) {
       console.error('Error in fallback analytics:', error);
     }
@@ -172,24 +172,24 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
   // Helper functions (keep these the same as before)
   const generateMonthlyTrend = (transactions) => {
     const monthlyData = {};
-    
+
     transactions.forEach(tx => {
       if (!tx.date) return;
-      
+
       const date = new Date(tx.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
+
       if (!monthlyData[monthKey]) {
         monthlyData[monthKey] = { income: 0, expenses: 0 };
       }
-      
+
       if (tx.type === 'income') {
         monthlyData[monthKey].income += parseFloat(tx.amount) || 0;
       } else {
         monthlyData[monthKey].expenses += parseFloat(tx.amount) || 0;
       }
     });
-    
+
     return Object.entries(monthlyData)
       .map(([month, data]) => ({
         month: formatMonth(month),
@@ -203,15 +203,15 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
   const generateWeeklySpending = (transactions) => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const weeklyData = days.map(day => ({ day, amount: 0 }));
-    
+
     transactions.forEach(tx => {
       if (tx.type !== 'expense') return;
-      
+
       const date = new Date(tx.date);
       const dayIndex = (date.getDay() + 6) % 7;
       weeklyData[dayIndex].amount += parseFloat(tx.amount) || 0;
     });
-    
+
     return weeklyData;
   };
 
@@ -257,7 +257,7 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
 
   // Calculate derived stats safely
   const netIncome = dashboardData.totalIncome - dashboardData.totalExpenses;
-  const budgetUsed = dashboardData.totalIncome > 0 
+  const budgetUsed = dashboardData.totalIncome > 0
     ? parseFloat((dashboardData.totalExpenses / dashboardData.totalIncome * 100).toFixed(1))
     : 0;
 
@@ -373,7 +373,7 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
             ${dashboardData.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           <div className="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div 
+            <div
               className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full"
               style={{ width: `${Math.min(budgetUsed, 100)}%` }}
             ></div>
@@ -423,13 +423,13 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
           </p>
           <div className="mt-2 flex items-center text-sm">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              dashboardData.savingsRate >= 20 
+              dashboardData.savingsRate >= 20
                 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                 : dashboardData.savingsRate >= 0
                 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                 : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
             }`}>
-              {dashboardData.savingsRate >= 20 ? 'Excellent' : 
+              {dashboardData.savingsRate >= 20 ? 'Excellent' :
                dashboardData.savingsRate >= 0 ? 'On Track' : 'Needs Improvement'}
             </span>
           </div>
@@ -483,9 +483,9 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
                       <Cell key={`cell-${index}`} fill={entry.color || '#6B7280'} />
                     ))}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => [`$${parseFloat(value).toFixed(2)}`, 'Amount']}
-                    contentStyle={{ 
+                    contentStyle={{
                       backgroundColor: 'white',
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px'
@@ -514,40 +514,40 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dashboardData.monthlyTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="month" 
+                  <XAxis
+                    dataKey="month"
                     stroke="#6B7280"
                     fontSize={12}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="#6B7280"
                     fontSize={12}
                     tickFormatter={(value) => `$${value}`}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value) => [`$${parseFloat(value).toFixed(2)}`, '']}
                     labelFormatter={(label) => `Month: ${label}`}
-                    contentStyle={{ 
+                    contentStyle={{
                       backgroundColor: 'white',
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px'
                     }}
                   />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="income" 
+                  <Line
+                    type="monotone"
+                    dataKey="income"
                     name="Income"
-                    stroke="#10B981" 
+                    stroke="#10B981"
                     strokeWidth={3}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="expenses" 
+                  <Line
+                    type="monotone"
+                    dataKey="expenses"
                     name="Expenses"
-                    stroke="#EF4444" 
+                    stroke="#EF4444"
                     strokeWidth={3}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
@@ -579,14 +579,14 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
           </div>
           <div className="space-y-4">
             {dashboardData.recentTransactions.slice(0, 5).map((transaction, index) => (
-              <div 
+              <div
                 key={index}
                 className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-750 rounded-xl transition-colors duration-200"
               >
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-xl ${
-                    transaction.type === 'income' 
-                      ? 'bg-green-100 dark:bg-green-900/30' 
+                    transaction.type === 'income'
+                      ? 'bg-green-100 dark:bg-green-900/30'
                       : 'bg-red-100 dark:bg-red-900/30'
                   }`}>
                     <span className="text-xl">
@@ -604,8 +604,8 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
                 </div>
                 <div className="text-right">
                   <p className={`font-bold text-lg ${
-                    transaction.type === 'income' 
-                      ? 'text-green-600 dark:text-green-400' 
+                    transaction.type === 'income'
+                      ? 'text-green-600 dark:text-green-400'
                       : 'text-red-600 dark:text-red-400'
                   }`}>
                     {transaction.type === 'income' ? '+' : '-'}${Math.abs(parseFloat(transaction.amount) || 0).toFixed(2)}
@@ -640,32 +640,32 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dashboardData.weeklySpending}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-                    <XAxis 
-                      dataKey="day" 
+                    <XAxis
+                      dataKey="day"
                       stroke="#6B7280"
                       fontSize={12}
                     />
-                    <YAxis 
+                    <YAxis
                       stroke="#6B7280"
                       fontSize={12}
                       tickFormatter={(value) => `$${value}`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value) => [`$${parseFloat(value).toFixed(2)}`, 'Spent']}
-                      contentStyle={{ 
+                      contentStyle={{
                         backgroundColor: 'white',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px'
                       }}
                     />
-                    <Bar 
-                      dataKey="amount" 
+                    <Bar
+                      dataKey="amount"
                       name="Daily Spending"
                       radius={[4, 4, 0, 0]}
                     >
                       {dashboardData.weeklySpending.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
+                        <Cell
+                          key={`cell-${index}`}
                           fill={entry.amount > 200 ? '#EF4444' : entry.amount > 100 ? '#F59E0B' : '#10B981'}
                         />
                       ))}
