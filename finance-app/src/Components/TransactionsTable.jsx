@@ -301,3 +301,4 @@ const TransactionForm = ({
     </div>
   );
 };
+export default TransactionsTable;
