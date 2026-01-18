@@ -1,0 +1,71 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend Server",
+      "type": "npm",
+      "script": "start",
+      "problemMatcher": [],
+      "detail": "node app.js"
+    },
+    {
+      "label": "Start Backend Dev",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "detail": "nodemon app.js"
+    },
+    {
+      "label": "Test Database Connection",
+      "type": "npm",
+      "script": "test-db",
+      "problemMatcher": [],
+      "detail": "Test PostgreSQL connection"
+    },
+    {
+      "label": "Start Frontend Dev Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/finance-app"
+      },
+      "problemMatcher": [],
+      "detail": "Start Vite dev server"
+    },
+    {
+      "label": "Build Frontend",
+      "type": "shell",
+      "command": "npm run build",
+      "options": {
+        "cwd": "${workspaceFolder}/finance-app"
+      },
+      "problemMatcher": [],
+      "detail": "Build frontend for production"
+    },
+    {
+      "label": "Install Backend Dependencies",
+      "type": "npm",
+      "script": "install",
+      "problemMatcher": [],
+      "detail": "npm install"
+    },
+    {
+      "label": "Install Frontend Dependencies",
+      "type": "shell",
+      "command": "npm install",
+      "options": {
+        "cwd": "${workspaceFolder}/finance-app"
+      },
+      "problemMatcher": [],
+      "detail": "Install frontend dependencies"
+    },
+    {
+      "label": "Install All Dependencies",
+      "dependsOn": [
+        "Install Backend Dependencies",
+        "Install Frontend Dependencies"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

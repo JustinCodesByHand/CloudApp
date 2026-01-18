@@ -11,6 +11,40 @@ All source code has been organized into a git repository with a clean project st
 
 ---
 
+## VS Code Integration
+
+This project is fully configured for Visual Studio Code development with:
+
+### Quick Start with VS Code
+```bash
+# Open the workspace
+code CloudApp.code-workspace
+
+# Or open the folder directly
+code .
+```
+
+### Features Configured
+- ✅ **Editor Settings**: Auto-format on save, consistent line endings
+- ✅ **Git Integration**: Auto-fetch, smart commits, recommended GitLens extension
+- ✅ **Debug Configurations**: Launch backend, frontend, or full-stack debugging
+- ✅ **Task Automation**: Quick commands for dev servers, builds, and testing
+- ✅ **Recommended Extensions**: Prettier, ESLint, Tailwind CSS, React snippets
+
+### Files Included
+```
+.vscode/
+├── settings.json        # Project-specific editor settings
+├── extensions.json      # Recommended extensions list
+├── launch.json          # Debug configurations for Node.js and Chrome
+└── tasks.json          # Automated tasks (start servers, build, install)
+CloudApp.code-workspace  # Multi-folder workspace file
+```
+
+See [GIT_PUSH_TEST.md](./GIT_PUSH_TEST.md) for detailed VS Code usage instructions.
+
+---
+
 ## Project Structure
 
 ```
