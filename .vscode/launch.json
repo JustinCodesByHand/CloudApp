@@ -50,16 +50,14 @@
     {
       "type": "chrome",
       "request": "launch",
-      "name": "Launch Frontend (Vite)",
+      "name": "Launch Frontend (Vite) - Port 5173",
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}/finance-app",
       "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
       "preLaunchTask": "Start Frontend Dev Server",
       "runtimeArgs": [
         "--disable-web-security"
-      ],
-      // Note: Ensure frontend dev server is running on port 5173
-      // Start with: cd finance-app && npm run dev
+      ]
     }
   ],
   "compounds": [
