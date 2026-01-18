@@ -44,7 +44,7 @@
         "request": "launch",
         "name": "Launch Backend",
         "skipFiles": ["<node_internals>/**"],
-        "program": "${workspaceFolder:CloudApp (Root)}/app.js",
+        "program": "${workspaceFolder}/app.js",
         "console": "integratedTerminal"
       }
     ]
