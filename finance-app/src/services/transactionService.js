@@ -91,6 +91,20 @@ class TransactionService {
       throw this._handleError(error);
     }
   }
+
+  /**
+   * Delete a transaction by ID
+   */
+  async deleteTransaction(transactionId) {
+    try {
+      const response = await this.client.delete(
+        `${API_CONFIG.TRANSACTIONS_ENDPOINT}/${transactionId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw this._handleError(error);
+    }
+  }
 }
 
 export default new TransactionService();

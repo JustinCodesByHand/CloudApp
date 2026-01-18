@@ -1,5 +1,20 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';  // Add Link import
+import { useNavigate, Link } from 'react-router-dom';
+import {
+  Box,
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  CircularProgress,
+  Stack,
+  Card,
+  CardContent,
+  Divider,
+} from '@mui/material';
+import { Lock as LockIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 function Login() {
@@ -15,25 +30,19 @@ function Login() {
     setLoading(true);
 
     try {
-      console.log('Attempting login with:', { email });
-      
       const response = await axios.post('http://localhost:5000/login', {
         email,
         password
       });
 
-      console.log('Login response:', response.data);
-      
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        console.log('Token stored, user:', response.data.user);
         navigate('/dashboard');
       } else {
         setError('Login failed. No token received.');
       }
     } catch (err) {
-      console.error('Login error details:', err);
       setError(err.response?.data?.error || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -43,95 +52,142 @@ function Login() {
   const testBackendConnection = async () => {
     try {
       const response = await axios.get('http://localhost:5000/health');
-      alert(`Backend is running!\nStatus: ${response.data.status}\n\nTest login with:\nEmail: test67@example.com\nPassword: newpassword123`);
+      alert(`Backend is running!\nStatus: ${response.data.status}`);
     } catch (err) {
       alert('Backend not running. Start with: npm run dev');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
-      <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Finance Dashboard</h1>
-          <p className="text-gray-400">Sign in to access your financial insights</p>
-        </div>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1a1a2e 50%, #16213e 100%)',
+        p: 2,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Stack spacing={3}>
+          {/* Logo/Header */}
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 60,
+                height: 60,
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                mb: 2,
+              }}
+            >
+              <LockIcon sx={{ fontSize: 32, color: 'white' }} />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+              Finance AI
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Sign in to access your financial dashboard
+            </Typography>
+          </Box>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          {/* Login Card */}
+          <Card
+            sx={{
+              backdropFilter: 'blur(10px)',
+              backgroundColor: 'rgba(30, 41, 59, 0.8)',
+            }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+            <CardContent sx={{ p: 4 }}>
+              <form onSubmit={handleLogin}>
+                <Stack spacing={3}>
+                  <TextField
+                    fullWidth
+                    label="Email Address"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                    autoFocus
+                  />
 
-        <div className="mt-6 text-center space-y-4">
-          <p className="text-gray-400 text-sm">
-            Don't have an account?{' '}
-            <button
-              onClick={() => navigate('/register')}
-              className="text-blue-400 hover:text-blue-300 font-medium"
-            >
-              Create one now
-            </button>
-          </p>
-          
-          <div className="pt-4 border-t border-gray-700">
-            <p className="text-gray-400 text-sm mb-2">
-              Need help? Test backend connection:
-            </p>
-            <button
-              onClick={testBackendConnection}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm transition"
-            >
-              Check Backend Status
-            </button>
-          </div>
-          
-          <div className="pt-2">
-            <p className="text-gray-500 text-xs">
-              Try: test67@example.com / newpassword123
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                  />
+
+                  {error && (
+                    <Alert severity="error" sx={{ borderRadius: 2 }}>
+                      {error}
+                    </Alert>
+                  )}
+
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    size="large"
+                    type="submit"
+                    disabled={loading}
+                    sx={{
+                      background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                      mt: 2,
+                    }}
+                  >
+                    {loading ? (
+                      <CircularProgress size={24} sx={{ color: 'white' }} />
+                    ) : (
+                      'Sign In'
+                    )}
+                  </Button>
+
+                  <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+                    Don't have an account?{' '}
+                    <Link to="/register" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: 600 }}>
+                      Sign up
+                    </Link>
+                  </Typography>
+                </Stack>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Test Backend Button */}
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={testBackendConnection}
+            sx={{ mt: 2 }}
+          >
+            Test Backend Connection
+          </Button>
+
+          {/* Demo Credentials */}
+          <Card sx={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+            <CardContent>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.light' }}>
+                Demo Credentials:
+              </Typography>
+              <Typography variant="caption" display="block" sx={{ color: 'text.secondary', mt: 1 }}>
+                Demo accounts are available for testing.
+              </Typography>
+              <Typography variant="caption" display="block" sx={{ color: 'text.secondary' }}>
+                Please use the demo credentials provided by your administrator.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Stack>
+      </Container>
+    </Box>
   );
 }
 

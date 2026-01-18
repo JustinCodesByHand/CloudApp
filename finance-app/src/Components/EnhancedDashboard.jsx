@@ -1,9 +1,25 @@
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+import {
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  CardHeader,
+  Box,
+  Typography,
+  CircularProgress,
+  Alert,
+  Button,
+  Stack,
+  LinearProgress,
+} from '@mui/material';
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { Refresh as RefreshIcon, TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon } from '@mui/icons-material';
+import { useLoading } from '../hooks/useLoading';
 
 function EnhancedDashboard({ aiInsight, onGetAdvice }) {
   const [user, setUser] = useState(null);
@@ -11,6 +27,7 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
   const [awsLoading, setAwsLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { setIsLoading, setLoadingVariant } = useLoading();
   
   // Initialize with safe defaults
   const [dashboardData, setDashboardData] = useState({
@@ -25,7 +42,11 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
   });
 
   useEffect(() => {
-    fetchDashboardData();
+    setIsLoading(true);
+    setLoadingVariant('dashboard');
+    fetchDashboardData().finally(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   const fetchDashboardData = async () => {
@@ -238,6 +259,13 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
     return colors[category] || '#6B7280';
   };
 
+  // Add color to spending by category data
+  const spendingByColorCategory = dashboardData.spendingByCategory.map(cat => ({
+    ...cat,
+    stroke: getCategoryColor(cat.name),
+    fill: getCategoryColor(cat.name),
+  }));
+
   const handleGetAIAdvice = async () => {
     setAwsLoading(true);
     try {
@@ -263,468 +291,276 @@ function EnhancedDashboard({ aiInsight, onGetAdvice }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your financial dashboard...</p>
-        </div>
-      </div>
+      <Container maxWidth="lg" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress sx={{ mb: 2 }} />
+          <Typography color="text.secondary">Loading your financial dashboard...</Typography>
+        </Box>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md text-center">
-          <div className="text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Error Loading Dashboard</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-          <button
-            onClick={fetchDashboardData}
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 font-medium"
-          >
-            Retry Loading
-          </button>
-        </div>
-      </div>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={fetchDashboardData}>
+              Retry
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 p-4 md:p-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Finance AI Dashboard
-          </h1>
-          {user && (
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Welcome back, <span className="font-semibold text-gray-800 dark:text-white">{user.username || user.email}</span>
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleGetAIAdvice}
-            disabled={awsLoading}
-            className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
-          >
-            {awsLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <span className="text-lg">🤖</span>
-                Get AI Advice
-              </>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+              Finance AI Dashboard
+            </Typography>
+            {user && (
+              <Typography variant="body2" color="text.secondary">
+                Welcome back, {user.username}!
+              </Typography>
             )}
-          </button>
-
-        <button
-  onClick={() => navigate('/transactions')}
-  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-lg hover:from-purple-600 hover:to-pink-700 transition-all duration-300 font-medium"
->
-  <span className="text-lg">📝</span> Manage Transactions
-</button>
-
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 text-gray-800 dark:text-gray-200 rounded-lg hover:from-gray-300 hover:to-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-300 font-medium"
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={fetchDashboardData}
           >
-            Logout
-          </button>
-        </div>
-      </div>
+            Refresh
+          </Button>
+        </Stack>
+      </Box>
 
-      {/* AI Insight Banner */}
-      {aiInsight && (
-        <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl">
-              <span className="text-2xl">💡</span>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">AI Financial Insight</h3>
-              <p className="text-gray-700 dark:text-gray-300">{aiInsight}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Total Balance Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-lg">
-              <span className="text-2xl">💰</span>
-            </div>
-            <span className={`text-sm font-medium ${
-              netIncome >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {netIncome >= 0 ? '+' : ''}${netIncome.toFixed(2)}
-            </span>
-          </div>
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Total Balance</h3>
-          <p className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
-            ${dashboardData.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-          <div className="mt-4 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full"
-              style={{ width: `${Math.min(budgetUsed, 100)}%` }}
-            ></div>
-          </div>
-        </div>
-
-        {/* Monthly Spending Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg">
-              <span className="text-2xl">💸</span>
-            </div>
-            <span className="text-sm font-medium text-red-600 dark:text-red-400">
-              ${dashboardData.totalExpenses.toFixed(2)}
-            </span>
-          </div>
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Monthly Spending</h3>
-          <p className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
-            ${dashboardData.totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            {dashboardData.totalIncome > 0 ? (
-              <>
-                {budgetUsed}% of ${dashboardData.totalIncome.toFixed(2)} income
-              </>
-            ) : (
-              'Add income to see budget usage'
-            )}
-          </div>
-        </div>
-
-        {/* Savings Rate Card - FIXED: using toFixed on a number */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg">
-              <span className="text-2xl">📈</span>
-            </div>
-            <span className={`text-sm font-medium ${
-              dashboardData.savingsRate >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {dashboardData.savingsRate >= 0 ? '+' : ''}{dashboardData.savingsRate.toFixed(1)}%
-            </span>
-          </div>
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Savings Rate</h3>
-          <p className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
-            {typeof dashboardData.savingsRate === 'number' ? dashboardData.savingsRate.toFixed(1) : '0.0'}%
-          </p>
-          <div className="mt-2 flex items-center text-sm">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              dashboardData.savingsRate >= 20 
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                : dashboardData.savingsRate >= 0
-                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-            }`}>
-              {dashboardData.savingsRate >= 20 ? 'Excellent' : 
-               dashboardData.savingsRate >= 0 ? 'On Track' : 'Needs Improvement'}
-            </span>
-          </div>
-        </div>
+      {/* Summary Cards */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {/* Balance with Budget Overview Meter */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography color="text.secondary" gutterBottom>
+                Balance
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+                ${dashboardData.balance.toFixed(2)}
+              </Typography>
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="caption" color="text.secondary">Budget Used</Typography>
+                  <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                    {budgetUsed.toFixed(1)}%
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min(budgetUsed, 100)}
+                  sx={{
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 4,
+                      backgroundColor: budgetUsed > 80 ? '#EF4444' : '#3C82F6',
+                    }
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Income Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 rounded-lg">
-              <span className="text-2xl">⚖️</span>
-            </div>
-            <span className="text-sm font-medium text-green-600 dark:text-green-400">
-              ${dashboardData.totalIncome.toFixed(2)}
-            </span>
-          </div>
-          <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Monthly Income</h3>
-          <p className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
-            ${dashboardData.totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            {dashboardData.recentTransactions.filter(t => t.type === 'income').length} income transactions
-          </div>
-        </div>
-      </div>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Box>
+                  <Typography color="text.secondary" gutterBottom>
+                    Income
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#10B981' }}>
+                    ${dashboardData.totalIncome.toFixed(2)}
+                  </Typography>
+                </Box>
+                <TrendingUpIcon sx={{ fontSize: 40, color: '#10B981', opacity: 0.3 }} />
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Expenses Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Box>
+                  <Typography color="text.secondary" gutterBottom>
+                    Expenses
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#EF4444' }}>
+                    ${dashboardData.totalExpenses.toFixed(2)}
+                  </Typography>
+                </Box>
+                <TrendingDownIcon sx={{ fontSize: 40, color: '#EF4444', opacity: 0.3 }} />
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* AI Insight Display */}
+      {aiInsight && (
+        <Card sx={{ mb: 4, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)' }}>
+          <CardHeader title="AI Insight" />
+          <CardContent>
+            <Typography variant="body2">
+              {aiInsight}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Top Actions Bar */}
+      <Box sx={{ mb: 4, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={fetchDashboardData}
+        >
+          Refresh
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleGetAIAdvice}
+          disabled={awsLoading}
+          sx={{
+            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+          }}
+        >
+          {awsLoading ? 'Loading AI...' : 'Get AI Insights'}
+        </Button>
+      </Box>
+
+      {/* AI Insight Display */}
+      {aiInsight && (
+        <Card sx={{ mb: 4, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)' }}>
+          <CardHeader title="AI Insight" />
+          <CardContent>
+            <Typography variant="body2">
+              {aiInsight}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Spending by Category Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Spending by Category</h3>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Total: ${dashboardData.spendingByCategory.reduce((sum, cat) => sum + (cat.value || 0), 0).toFixed(2)}
-            </span>
-          </div>
-          {dashboardData.spendingByCategory.length > 0 ? (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={dashboardData.spendingByCategory}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {dashboardData.spendingByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color || '#6B7280'} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value) => [`$${parseFloat(value).toFixed(2)}`, 'Amount']}
-                    contentStyle={{ 
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-80 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-4xl mb-4">📊</div>
-                <p className="text-gray-600 dark:text-gray-400">No spending data yet</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Add expense transactions to see category breakdown</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Monthly Trend Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-6">Monthly Income vs Expenses</h3>
-          {dashboardData.monthlyTrend.length > 0 ? (
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dashboardData.monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="#6B7280"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="#6B7280"
-                    fontSize={12}
-                    tickFormatter={(value) => `$${value}`}
-                  />
-                  <Tooltip 
-                    formatter={(value) => [`$${parseFloat(value).toFixed(2)}`, '']}
-                    labelFormatter={(label) => `Month: ${label}`}
-                    contentStyle={{ 
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px'
-                    }}
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="income" 
-                    name="Income"
-                    stroke="#10B981" 
-                    strokeWidth={3}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="expenses" 
-                    name="Expenses"
-                    stroke="#EF4444" 
-                    strokeWidth={3}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-80 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-4xl mb-4">📈</div>
-                <p className="text-gray-600 dark:text-gray-400">No trend data yet</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Add transactions to see monthly trends</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Transactions & Weekly Spending */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Transactions */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Recent Transactions</h3>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {dashboardData.recentTransactions.length} total
-            </span>
-          </div>
-          <div className="space-y-4">
-            {dashboardData.recentTransactions.slice(0, 5).map((transaction, index) => (
-              <div 
-                key={index}
-                className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-750 rounded-xl transition-colors duration-200"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${
-                    transaction.type === 'income' 
-                      ? 'bg-green-100 dark:bg-green-900/30' 
-                      : 'bg-red-100 dark:bg-red-900/30'
-                  }`}>
-                    <span className="text-xl">
-                      {transaction.type === 'income' ? '💰' : '💸'}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800 dark:text-white">
-                      {transaction.description}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {transaction.category} • {new Date(transaction.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className={`font-bold text-lg ${
-                    transaction.type === 'income' 
-                      ? 'text-green-600 dark:text-green-400' 
-                      : 'text-red-600 dark:text-red-400'
-                  }`}>
-                    {transaction.type === 'income' ? '+' : '-'}${Math.abs(parseFloat(transaction.amount) || 0).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {transaction.type}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {dashboardData.recentTransactions.length === 0 && (
-              <div className="text-center py-8">
-                <div className="text-4xl mb-4">📊</div>
-                <p className="text-gray-600 dark:text-gray-400">No transactions yet</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Start adding transactions to see them here</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Weekly Spending Chart */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white">Weekly Spending Trend</h3>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              This Week
-            </span>
-          </div>
-          {dashboardData.weeklySpending.some(day => day.amount > 0) ? (
-            <>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dashboardData.weeklySpending}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-                    <XAxis 
-                      dataKey="day" 
-                      stroke="#6B7280"
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      stroke="#6B7280"
-                      fontSize={12}
-                      tickFormatter={(value) => `$${value}`}
-                    />
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {/* Monthly Trend - Line Chart */}
+        <Grid item xs={12} lg={6}>
+          <Card>
+            <CardHeader title="Monthly Trend" />
+            <CardContent>
+              {dashboardData.monthlyTrend.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={dashboardData.monthlyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis dataKey="month" stroke="#6B7280" />
+                    <YAxis stroke="#6B7280" />
                     <Tooltip 
-                      formatter={(value) => [`$${parseFloat(value).toFixed(2)}`, 'Spent']}
-                      contentStyle={{ 
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px'
-                      }}
+                      contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: 8 }}
+                      labelStyle={{ color: '#fff' }}
                     />
-                    <Bar 
-                      dataKey="amount" 
-                      name="Daily Spending"
-                      radius={[4, 4, 0, 0]}
-                    >
-                      {dashboardData.weeklySpending.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.amount > 200 ? '#EF4444' : entry.amount > 100 ? '#F59E0B' : '#10B981'}
-                        />
-                      ))}
-                    </Bar>
+                    <Legend />
+                    <Line type="monotone" dataKey="income" stroke="#3C82F6" strokeWidth={2} name="Income" dot={{ fill: '#3C82F6', r: 4 }} />
+                    <Line type="monotone" dataKey="expenses" stroke="#EF4444" strokeWidth={2} name="Expenses" dot={{ fill: '#EF4444', r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography color="text.secondary">No data available</Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Weekly Spending - Bar Chart */}
+        <Grid item xs={12} lg={6}>
+          <Card>
+            <CardHeader title="Weekly Spending" />
+            <CardContent>
+              {dashboardData.weeklySpending.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={dashboardData.weeklySpending}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis dataKey="day" stroke="#6B7280" />
+                    <YAxis stroke="#6B7280" />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: 8 }}
+                      labelStyle={{ color: '#fff' }}
+                      formatter={(value) => `$${value.toFixed(2)}`}
+                    />
+                    <Legend />
+                    <Bar dataKey="amount" fill="#8B5CF6" name="Spending" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-              <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">This Week</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-white">
-                    ${dashboardData.weeklySpending.reduce((sum, day) => sum + (day.amount || 0), 0).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Avg/Day</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-white">
-                    ${(dashboardData.weeklySpending.reduce((sum, day) => sum + (day.amount || 0), 0) / 7).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Highest</p>
-                  <p className="text-xl font-bold text-gray-800 dark:text-white">
-                    ${Math.max(...dashboardData.weeklySpending.map(d => d.amount || 0)).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="h-64 flex items-center justify-center">
-              <div className="text-center">
-                <div className="text-4xl mb-4">📅</div>
-                <p className="text-gray-600 dark:text-gray-400">No weekly spending data</p>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">Add expenses to see weekly patterns</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography color="text.secondary">No data available</Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
 
-      {/* Refresh Button */}
-      <div className="mt-8 flex justify-center">
-        <button
-          onClick={() => {
-            setLoading(true);
-            fetchDashboardData();
-          }}
-          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 font-medium flex items-center gap-2"
-        >
-          <span className="text-lg">🔄</span>
-          Refresh Dashboard Data
-        </button>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-gray-500 dark:text-gray-400 text-sm">
-        <p>Finance AI Dashboard • Data updates in real-time • Last updated: {new Date().toLocaleTimeString()}</p>
-      </div>
-    </div>
+        {/* Spending by Category - Radar Chart */}
+        <Grid item xs={12} lg={6}>
+          <Card>
+            <CardHeader title="Spending by Category" />
+            <CardContent>
+              {dashboardData.spendingByCategory.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadarChart data={spendingByColorCategory}>
+                    <PolarGrid stroke="#e0e0e0" />
+                    <PolarAngleAxis dataKey="name" stroke="#6B7280" />
+                    <PolarRadiusAxis stroke="#6B7280" />
+                    {dashboardData.spendingByCategory.map((entry, index) => (
+                      <Radar
+                        key={`radar-${index}`}
+                        name={entry.name}
+                        dataKey="value"
+                        stroke={getCategoryColor(entry.name)}
+                        fill={getCategoryColor(entry.name)}
+                        fillOpacity={0.6}
+                      />
+                    ))}
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: 8 }}
+                      labelStyle={{ color: '#fff' }}
+                      formatter={(value) => `$${value.toFixed(2)}`}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography color="text.secondary">No data available</Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }
 

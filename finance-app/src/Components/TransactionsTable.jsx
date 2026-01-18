@@ -10,6 +10,7 @@ import {
   useOCR,
   useToast,
 } from '../hooks';
+import { useLoading } from '../hooks/useLoading';
 
 /**
  * Main Transactions Table Component
@@ -19,6 +20,7 @@ function TransactionsTable() {
   const navigate = useNavigate();
   const [showImageUpload, setShowImageUpload] = React.useState(false);
   const descriptionRef = useRef(null);
+  const { setIsLoading, setLoadingVariant } = useLoading();
 
   // Use custom hooks
   const transactions = useTransactions();
@@ -28,7 +30,11 @@ function TransactionsTable() {
 
   // Fetch transactions on mount
   useEffect(() => {
-    transactions.fetchTransactions();
+    setIsLoading(true);
+    setLoadingVariant('transactions');
+    transactions.fetchTransactions().finally(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   // Handle form submission
@@ -40,7 +46,7 @@ function TransactionsTable() {
       if (result.success) {
         form.resetForm();
         descriptionRef.current?.focus();
-        toast.showSuccess('✅ Transaction added successfully!');
+        toast.showSuccess('Transaction added successfully!');
       } else {
         toast.showError(`Error adding transaction: ${result.error}`);
       }
@@ -57,7 +63,7 @@ function TransactionsTable() {
       const result = await transactions.addTransaction(ocr.parsedTransactions[0]);
 
       if (result.success) {
-        toast.showSuccess('✅ Transaction saved from receipt!');
+        toast.showSuccess('Transaction saved from receipt!');
         ocr.resetOCR();
       } else {
         toast.showError('Error saving transaction');
@@ -78,7 +84,7 @@ function TransactionsTable() {
     ocr.completeOCR(extractedText, parsedTransactions);
     if (parsedTransactions.length > 0 && parsedTransactions[0].amount > 0) {
       const tx = parsedTransactions[0];
-      const msg = `✅ AI found: ${tx.description} - $${tx.amount.toFixed(2)} (${tx.category})`;
+      const msg = `Found: ${tx.description} - $${tx.amount.toFixed(2)} (${tx.category})`;
       toast.showSuccess(msg);
     }
   };
@@ -161,6 +167,14 @@ function TransactionsTable() {
               descriptionRef.current?.focus();
             }}
             onFirstTransactionClick={() => setShowImageUpload(true)}
+            onDeleteTransaction={async (transactionId) => {
+              const result = await transactions.deleteTransaction(transactionId);
+              if (result.success) {
+                toast.showSuccess('Transaction deleted successfully!');
+              } else {
+                toast.showError(`Error deleting transaction: ${result.error}`);
+              }
+            }}
           />
         </div>
       </div>

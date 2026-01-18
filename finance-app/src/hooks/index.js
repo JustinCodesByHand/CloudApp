@@ -36,12 +36,25 @@ export const useTransactions = () => {
     }
   }, [fetchTransactions]);
 
+  const deleteTransaction = useCallback(async (transactionId) => {
+    try {
+      await transactionService.deleteTransaction(transactionId);
+      await fetchTransactions();
+      return { success: true };
+    } catch (err) {
+      const errorMsg = err.message || 'Failed to delete transaction';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }, [fetchTransactions]);
+
   return {
     transactions,
     loading,
     error,
     fetchTransactions,
     addTransaction,
+    deleteTransaction,
     setTransactions,
   };
 };

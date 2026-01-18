@@ -834,6 +834,160 @@ app.get('/transactions', authenticateToken, async (req, res) => {
   }
 });
 
+// Delete transaction
+app.delete('/transactions/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { id } = req.params;
+
+    // Verify ownership before deleting
+    const checkResult = await pool.query(
+      "SELECT id FROM transactions WHERE id = $1 AND user_id = $2",
+      [id, userId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: "Transaction not found" });
+    }
+
+    const result = await pool.query(
+      "DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING id",
+      [id, userId]
+    );
+
+    res.json({
+      success: true,
+      message: "Transaction deleted",
+      transactionId: result.rows[0].id
+    });
+  } catch (err) {
+    console.error('Error deleting transaction:', err.message);
+    res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
+// ==================== RECURRING EXPENSES (Credit Card Payments) ====================
+
+// Get all recurring expenses for user
+app.get('/recurring-expenses', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const result = await pool.query(
+      `SELECT id, name, amount, frequency, category, description, last_added, created_at
+       FROM recurring_expenses 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      recurringExpenses: result.rows
+    });
+  } catch (err) {
+    console.error('Error fetching recurring expenses:', err.message);
+    res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
+// Create recurring expense
+app.post('/recurring-expenses', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { name, amount, frequency, category, description } = req.body;
+
+    if (!name || !amount || !frequency) {
+      return res.status(400).json({ error: "Name, amount, and frequency are required" });
+    }
+
+    // Valid frequencies: weekly, biweekly, monthly
+    const validFrequencies = ['weekly', 'biweekly', 'monthly'];
+    if (!validFrequencies.includes(frequency)) {
+      return res.status(400).json({ error: "Invalid frequency. Must be weekly, biweekly, or monthly" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO recurring_expenses (user_id, name, amount, frequency, category, description, last_added, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+       RETURNING id, name, amount, frequency, category, description, last_added, created_at`,
+      [userId, name, parseFloat(amount), frequency, category || 'Other', description || '']
+    );
+
+    res.status(201).json({
+      success: true,
+      recurringExpense: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Error creating recurring expense:', err.message);
+    res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
+// Update recurring expense
+app.put('/recurring-expenses/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { id } = req.params;
+    const { name, amount, frequency, category, description } = req.body;
+
+    // Verify ownership
+    const checkResult = await pool.query(
+      "SELECT id FROM recurring_expenses WHERE id = $1 AND user_id = $2",
+      [id, userId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: "Recurring expense not found" });
+    }
+
+    const result = await pool.query(
+      `UPDATE recurring_expenses 
+       SET name = COALESCE($1, name), 
+           amount = COALESCE($2, amount),
+           frequency = COALESCE($3, frequency),
+           category = COALESCE($4, category),
+           description = COALESCE($5, description)
+       WHERE id = $6 AND user_id = $7
+       RETURNING id, name, amount, frequency, category, description, last_added, created_at`,
+      [name, amount ? parseFloat(amount) : null, frequency, category, description, id, userId]
+    );
+
+    res.json({
+      success: true,
+      recurringExpense: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Error updating recurring expense:', err.message);
+    res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
+// Delete recurring expense
+app.delete('/recurring-expenses/:id', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { id } = req.params;
+
+    const result = await pool.query(
+      "DELETE FROM recurring_expenses WHERE id = $1 AND user_id = $2 RETURNING id",
+      [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Recurring expense not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Recurring expense deleted"
+    });
+  } catch (err) {
+    console.error('Error deleting recurring expense:', err.message);
+    res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -845,6 +999,10 @@ app.get('/health', (req, res) => {
       'GET /dashboard (protected)',
       'GET /user/spending (protected)',
       'POST /transactions (protected)',
+      'GET /recurring-expenses (protected)',
+      'POST /recurring-expenses (protected)',
+      'PUT /recurring-expenses/:id (protected)',
+      'DELETE /recurring-expenses/:id (protected)',
       'GET /validate-token (protected)'
     ]
   });

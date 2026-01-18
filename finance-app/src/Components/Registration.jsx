@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import {
+  Container,
+  Box,
+  Card,
+  TextField,
+  Button,
+  Alert,
+  Stack,
+  Typography,
+  Link as MuiLink,
+  CircularProgress,
+} from '@mui/material';
 
 function Registration() {
   const [formData, setFormData] = useState({
@@ -73,7 +85,6 @@ function Registration() {
       if (response.status === 200) {
         setSuccess('Registration successful! You will be redirected to login...');
         
-        // Auto-login after successful registration
         setTimeout(() => {
           navigate('/');
         }, 2000);
@@ -89,105 +100,101 @@ function Registration() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
-      <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400">Join Finance AI to track your expenses</p>
-        </div>
+    <Container maxWidth="sm" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+      <Card sx={{
+        width: '100%',
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        backdropFilter: 'blur(10px)',
+      }}>
+        <Box sx={{ p: 4 }}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+              Create Account
+            </Typography>
+            <Typography color="text.secondary">
+              Join Finance AI to track your expenses
+            </Typography>
+          </Box>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Username
-            </label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Choose a username"
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit}>
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                label="Username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Choose a username"
+                required
+              />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
+              <TextField
+                fullWidth
+                label="Email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                required
+              />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="At least 6 characters"
-              required
-            />
-          </div>
+              <TextField
+                fullWidth
+                label="Password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="At least 6 characters"
+                required
+              />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Confirm your password"
-              required
-            />
-          </div>
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="Confirm your password"
+                required
+              />
 
-          {error && (
-            <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
+              {error && <Alert severity="error">{error}</Alert>}
+              {success && <Alert severity="success">{success}</Alert>}
 
-          {success && (
-            <div className="bg-green-900/50 border border-green-700 text-green-200 px-4 py-3 rounded-lg">
-              {success}
-            </div>
-          )}
+              <Button
+                fullWidth
+                variant="contained"
+                size="large"
+                type="submit"
+                disabled={loading}
+                sx={{
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  mt: 2
+                }}
+              >
+                {loading ? 'Creating Account...' : 'Register'}
+              </Button>
+            </Stack>
+          </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating Account...' : 'Register'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-400">
-            Already have an account?{' '}
-            <Link to="/" className="text-blue-400 hover:text-blue-300 font-medium">
-              Sign in here
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              Already have an account?{' '}
+              <MuiLink
+                component={Link}
+                to="/"
+                sx={{ color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}
+              >
+                Login here
+              </MuiLink>
+            </Typography>
+          </Box>
+        </Box>
+      </Card>
+    </Container>
   );
 }
 
